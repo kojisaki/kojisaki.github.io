@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h1>履歴の利用（ウエイクワード「OK コンピューター」）</h1>
+<h1>複数のキーワード（順序入れ替え可）</h1>
 
 <p>
 <button id="startButton">start</button>
@@ -22,14 +22,19 @@
 <script>
 // 応答の定義（ハッシュ）    
 var response = {
-    "あなたは誰ですか":"わたしはアレクサではありません",
-    "何歳ですか":"え、わたし、何歳にみえますか",
-    "元気ですか":"元気ですよー",
-    "好きな食べ物は":"焼肉です"
+    "あなた,誰": "わたしはアレクサではありません",
+    "名前は": "内緒です",
+    "何歳": "え、わたし、何歳にみえますか",
+    "元気": "元気ですよー",
+    "好きな,色": "オレンジです",
+    "夢は": "世界を冒険することです",
+    "好きな,スポーツ": "けん玉です",
+    "好きな,食べ物": "焼肉です",
+    "和歌山,天気": "和歌山の天気はたぶん晴れでしょう",
+    "大阪,天気": "大阪の天気は雨です。",
+    "明日,天気": "明日の天気は曇りだと思います",
+    "明日,和歌山,天気": "明日の和歌山の天気はずばり雪です"
 };
-
-// ウエイクワードの定義
-var wake_word = "OK.*コンピューター";
 
 const startButton = document.querySelector('#startButton'); // 開始ボタン
 const stopButton = document.querySelector('#stopButton'); // 停止ボタン
@@ -60,33 +65,44 @@ let output = ''; // 出力
 // 認識結果が出力されたときのイベントハンドラ
 asr.onresult = function(event){
     let transcript = event.results[event.resultIndex][0].transcript; // 結果文字列
-    let transcript_previous = null; // 結果文字列（ひとつ前）
-
-    if(event.resultIndex > 0){
-        transcript_previous = event.results[event.resultIndex - 1][0].transcript;
-    }
 
     let output_not_final = '';
-    if(event.results[event.resultIndex].isFinal) { // 結果が確定（Final）のとき
+    if (event.results[event.resultIndex].isFinal) { // 結果が確定（Final）のとき
+	    asr.abort(); // 音声認識を停止
+	    
+        let answer;
+        
+        let keys = Object.keys(response);
+        keys.forEach(function(key) {
+            let flag = true;
+            console.log(transcript);
+            key.split(',').forEach(function(word) {              
+                let pattern = new RegExp(word);
+                let flag_test = pattern.test(transcript); // マッチしたらtrue, しなかったらfalse
+                flag = flag && flag_test; // 両方trueならtrue
+                console.log(pattern + '+' + ':' + flag_test);
+                //flag = flag && new RegExp(word).test(transcript);
+            });
 
-        if(new RegExp(wake_word).test(transcript_previous)){
-            asr.abort(); // 音声認識を停止
-	        let answer = response[transcript];
+            if(flag){
+		        answer = response[key];
+                console.log(key + " : " + answer);
+            }
+        });
 
-            if(typeof answer == 'undefined'){
-	            answer = "ごめんなさい。わかりません。";
-    	    }
+        if(typeof answer == 'undefined'){
+	        answer = "ごめんなさい。わかりません。";
+    	}
+	
+        output += transcript + ' => ' + answer + '<br>';
 
-            output += transcript + ' => ' + answer + '<br>';
+	    tts.text = answer;
+	    // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
+	    tts.onend = function(event){
+	        asr.start(); // 音声認識を再開
+	    }
 
-	        tts.text = answer;
-	        // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
-	        tts.onend = function(event){
-	            asr.start(); // 音声認識を再開
-	        }
-
-	        speechSynthesis.speak(tts); // 再生
-        }
+	    speechSynthesis.speak(tts); // 再生
     } else { // 結果がまだ未確定のとき
         output_not_final = '<span style="color:#ddd;">' + transcript + '</span>';
     }
