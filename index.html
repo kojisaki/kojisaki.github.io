@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<h1>複数のキーワード（正規表現の利用）</h1>
+<h1>音声認識では読み取りにくい情報を補足する</h1>
 
 <p>
 <button id="startButton">start</button>
@@ -22,18 +22,16 @@
 <script>
 // 応答の定義（ハッシュ）    
 var response = {
-    ".*あなた.*誰.*": "わたしはアレクサではありません",
-    ".*名前は.*": "内緒です",
-    ".*何歳.*": "え、わたし、何歳にみえますか",
-    ".*元気.*": "元気ですよー",
-    ".*好きな.*色.*": "オレンジです",
-    ".*夢は.*": "世界を冒険することです",
-    ".*好きな.*スポーツ.*": "けん玉です",
-    ".*好きな.*食べ物.*": "焼肉です",
-    ".*和歌山.*天気.*": "和歌山の天気はたぶん晴れでしょう",
-    ".*大阪.*天気.*": "大阪の天気は雨です。",
-    ".*明日.*天気.*": "明日の天気は曇りだと思います",
-    ".*明日.*和歌山.*天気.*": "明日の和歌山の天気はずばり雪です"
+    "学館": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
+    "楽観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
+    "客観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
+    "バッカン": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
+    "達観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
+
+    "大阪の天気": ["大阪府の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/27/"],
+    "京都の天気": ["京都府の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/26/"],
+    "奈良の天気": ["奈良県の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/29/"],
+    "兵庫の天気": ["兵庫県の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/28/"]
 };
 
 const startButton = document.querySelector('#startButton'); // 開始ボタン
@@ -69,27 +67,28 @@ asr.onresult = function(event){
     let output_not_final = '';
     if (event.results[event.resultIndex].isFinal) { // 結果が確定（Final）のとき
 	    asr.abort(); // 音声認識を停止
-	    
-        let answer;
         
-        let keys = Object.keys(response);
-        keys.forEach(function(key) {
-            if(new RegExp(key).test(transcript)){ // 正規表現をtestしてtrue or false
-		        answer = response[key];
-                console.log(key + " : " + answer);
-            }
-        });
+	    let ret = response[transcript];
 
-        if(typeof answer == 'undefined'){
+        let answer;
+        let webpage;
+        
+        if(typeof ret == 'undefined'){
 	        answer = "ごめんなさい。わかりません。";
-    	}
-	
+    	}else{
+            answer = ret[0];
+            webpage = ret[1];
+        }
+
         output += transcript + ' => ' + answer + '<br>';
 
 	    tts.text = answer;
 	    // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
 	    tts.onend = function(event){
-	        asr.start(); // 音声認識を再開
+            if(typeof webpage != 'undefined'){
+                location.href = webpage; // ページを移動
+            }   
+            asr.start(); // 音声認識を再開 
 	    }
 
 	    speechSynthesis.speak(tts); // 再生
