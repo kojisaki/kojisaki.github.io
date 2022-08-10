@@ -4,13 +4,23 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="stylesheet" href="style.css">
+
+<!-- google翻訳APIを読み込み -->
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 <title>Spoken Dialog by Javascript</title>
 </head>
 <body>
 
-<h1>音声認識では読み取りにくい情報を補足する</h1>
+<h1>英語で話そう！</h1>
 
-<p>
+
+<h2>
+    ジェシカの質問に、英語で答えて下さい。
+</h2>
+
+<p class="buttons">
 <button id="startButton">start</button>
 <button id="stopButton">stop</button>
 </p>
@@ -19,19 +29,77 @@
 <div id="resultOutput"></div>
 </p>
 
+
+<div class="img_girl">
+    <img src="rdesign.png" alt="白人女性のイラスト">
+</div>
+
+
+
+<!-- 翻訳用の各言語ボタン -->
+<!-- <div class="text-center mb-3">
+    <a href="#googtrans(ja|en)" class="lang-select" data-lang="en"><img src="https://www.solodev.com/assets/google-translate/flag-usa.png" alt="USA"></a> 
+    <a href="#googtrans(ja|zh-CN)" class="lang-select" data-lang="zh-CN"><img src="https://www.solodev.com/assets/google-translate/flag-china.png" alt="China"></a> 
+    <a href="#googtrans(ja|es)" class="lang-select" data-lang="es"><img src="https://www.solodev.com/assets/google-translate/flag-mexico.png" alt="MEXICO"></a>
+    <a href="#googtrans(ja|fr)" class="lang-select" data-lang="fr"><img src="https://www.solodev.com/assets/google-translate/flag-france.png" alt="France"></a>
+    <a href="#googtrans(ja|ja)" class="lang-select" data-lang="ja"><img src="https://www.solodev.com/assets/google-translate/flag-japan.png" alt="JAPAN"></a>
+  </div> -->
+
+
+
 <script>
+
+//DeepL
+function transDeepL() {
+  //DeepLで翻訳したいテキストを設定
+  let text = 'This is translation test.';
+  //DeepLのAPIにリクエストするURLを設定
+  let apiUrl = 'https://api-free.deepl.com/v2/translate?auth_key=';
+  //DeepLのAPIキーを設定 ※各自のAPIキーで書き換え
+  let apiKey = '06f74542-7a66-2ddf-3402-ad4bc926c45a:fx';
+  //何の言語に翻訳するかで、日本語(ja)を設定
+  let lang = 'JA';
+  //APIリクエストのPOST時に必要なパラメータを設定
+  apiUrl = apiUrl + apiKey + '&text=' + text + '&target_lang=' + lang;
+  //DeepLのAPIに翻訳をリクエスト
+  let response =  UrlFetchApp.fetch(apiUrl).getContentText();
+  console.log(response);
+}
+
+function transDeepL() {
+  //DeepLで翻訳したいテキストを設定
+  let text = 'This is translation test.';
+  //DeepLのAPIにリクエストするURLを設定
+  let apiUrl = 'https://api-free.deepl.com/v2/translate?auth_key=';
+  //DeepLのAPIキーを設定 ※各自のAPIキーで書き換え
+  let apiKey = '69972330-6d4b-1068-36ea-487cd2dcd316:fx';
+  //何の言語に翻訳するかで、日本語(ja)を設定
+  let lang = 'JA';
+  //APIリクエストのPOST時に必要なパラメータを設定
+  apiUrl = apiUrl + apiKey + '&text=' + text + '&target_lang=' + lang;
+  //DeepLのAPIに翻訳をリクエスト
+  let response =  UrlFetchApp.fetch(apiUrl).getContentText();
+  let json =JSON.parse(response);
+  //ログ出力にDeepLから返却された情報を出力
+  console.log(json['translations'][0]['text']);
+}
+function doGet() {
+  var t = HtmlService.createTemplateFromFile('index.html');
+  t.message="Hello World!";
+  return t.evaluate();
+}
+
+
+
+
 // 応答の定義（ハッシュ）    
 var response = {
-    "学館": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
-    "楽観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
-    "客観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
-    "バッカン": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
-    "達観": ["もしかして：学環", "https://www.wakayama-u.ac.jp/socinfo/"],
-
-    "大阪の天気": ["大阪府の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/27/"],
-    "京都の天気": ["京都府の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/26/"],
-    "奈良の天気": ["奈良県の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/29/"],
-    "兵庫の天気": ["兵庫県の天気予報を表示します", "https://weather.yahoo.co.jp/weather/jp/28/"]
+    "あなたは誰ですか":"わたしはアレクサではありません",
+    "何歳ですか":"え、わたし、何歳にみえますか",
+    "元気ですか":"I'm fine.",
+    "好きな食べ物は":"焼肉です",
+    "hello":"Hi.How are you?",
+    "I'm fine":"Good."
 };
 
 const startButton = document.querySelector('#startButton'); // 開始ボタン
@@ -43,7 +111,7 @@ if (!'SpeechSynthesisUtterance' in window) {
 }
 const tts = new SpeechSynthesisUtterance(); // TTSインスタンスを生成
 //tts.text = textForm.value; // テキストを設定
-tts.lang = "ja-JP"; // 言語(日本語)、英語の場合はen-US
+tts.lang = "en-US"; // 言語(日本語)、英語の場合はen-US
 tts.rate = 1.0; // 速度
 tts.pitch = 1.0; // 声の高さ
 tts.volume = 1.0; // 音量
@@ -54,7 +122,7 @@ if (!'SpeechRecognition' in window) {
 }
 
 const asr = new SpeechRecognition(); // ASRインスタンスを生成
-asr.lang = "ja-JP"; // 言語（日本語）
+asr.lang = "en"; // 言語（日本語）
 asr.interimResults = true; // 途中結果出力をオン
 asr.continuous = true; // 継続入力をオン
 
@@ -67,28 +135,14 @@ asr.onresult = function(event){
     let output_not_final = '';
     if (event.results[event.resultIndex].isFinal) { // 結果が確定（Final）のとき
 	    asr.abort(); // 音声認識を停止
-        
-	    let ret = response[transcript];
-
-        let answer;
-        let webpage;
-        
-        if(typeof ret == 'undefined'){
-	        answer = "ごめんなさい。わかりません。";
-    	}else{
-            answer = ret[0];
-            webpage = ret[1];
-        }
-
+	    let answer = response[transcript];
+	
         output += transcript + ' => ' + answer + '<br>';
 
 	    tts.text = answer;
 	    // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
 	    tts.onend = function(event){
-            if(typeof webpage != 'undefined'){
-                location.href = webpage; // ページを移動
-            }   
-            asr.start(); // 音声認識を再開 
+	        asr.start(); // 音声認識を再開
 	    }
 
 	    speechSynthesis.speak(tts); // 再生
@@ -97,6 +151,10 @@ asr.onresult = function(event){
     }
     resultOutput.innerHTML = output + output_not_final;
 }
+
+
+
+
 
 // 開始ボタンのイベントハンドラ
 startButton.addEventListener('click', function() {
@@ -108,6 +166,23 @@ stopButton.addEventListener('click', function() {
     asr.abort();
     asr.stop();
 })
+
+
+// $('.lang-select').click(function() {
+//     var lang = $(this).attr('data-lang');
+//     window.location = $(this).attr('href');
+//     location.reload();
+//   });
+
+// // 翻訳ボタンが押されたときの翻訳処理
+// function googleTranslateElementInit() {
+//   new google.translate.TranslateElement({
+//     pageLanguage: 'ja', 
+//     layout: google.translate.TranslateElement.FloatPosition.TOP_LEFT
+//   }, 'google_translate_element');
+// }
+
+
 </script>
 
 </body>
